@@ -1,0 +1,279 @@
+
+<h2 class="sr-only">VG, DRI, and MEI gap metric calculator for educational NLP papers</h2>
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font-sans); }
+.wrap { padding: 1.5rem 0; max-width: 680px; }
+.title { font-size: 18px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 4px; }
+.sub { font-size: 14px; color: var(--color-text-secondary); margin-bottom: 1.5rem; }
+.section-label { font-size: 13px; font-weight: 500; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; margin-top: 1.5rem; }
+.metric-cards { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 12px; margin-bottom: 1.5rem; }
+.metric-card { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 1rem; }
+.metric-card .label { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 4px; }
+.metric-card .value { font-size: 26px; font-weight: 500; color: var(--color-text-primary); }
+.metric-card .badge { font-size: 11px; padding: 2px 8px; border-radius: 20px; margin-top: 6px; display: inline-block; }
+.badge-red { background: var(--color-background-danger); color: var(--color-text-danger); }
+.badge-amber { background: var(--color-background-warning); color: var(--color-text-warning); }
+.badge-green { background: var(--color-background-success); color: var(--color-text-success); }
+.card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1rem 1.25rem; margin-bottom: 12px; }
+.card-title { font-size: 15px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+.row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.row label { font-size: 13px; color: var(--color-text-secondary); flex: 1; min-width: 0; }
+.row input[type=number] { width: 72px; font-size: 14px; }
+.row select { font-size: 13px; flex: 1.2; }
+.paper-row { display: grid; grid-template-columns: 1fr 160px 160px; gap: 8px; align-items: center; margin-bottom: 8px; font-size: 13px; }
+.paper-row input[type=text] { font-size: 13px; }
+.paper-row select { font-size: 12px; }
+.add-btn { font-size: 13px; color: var(--color-text-info); background: none; border: 0.5px dashed var(--color-border-secondary); border-radius: var(--border-radius-md); padding: 6px 12px; cursor: pointer; width: 100%; margin-top: 4px; }
+.add-btn:hover { background: var(--color-background-info); }
+.remove-btn { background: none; border: none; cursor: pointer; color: var(--color-text-secondary); font-size: 16px; padding: 2px 6px; }
+.remove-btn:hover { color: var(--color-text-danger); }
+.calc-btn { background: var(--color-background-primary); border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding: 10px 24px; font-size: 14px; font-weight: 500; cursor: pointer; color: var(--color-text-primary); margin-top: 1rem; width: 100%; }
+.calc-btn:hover { background: var(--color-background-secondary); }
+.divider { border: none; border-top: 0.5px solid var(--color-border-tertiary); margin: 1.5rem 0; }
+.interp { font-size: 13px; color: var(--color-text-secondary); margin-top: 6px; line-height: 1.6; }
+.col-header { font-size: 11px; color: var(--color-text-secondary); margin-bottom: 4px; }
+.tabs { display: flex; gap: 8px; margin-bottom: 1.25rem; }
+.tab { font-size: 13px; padding: 6px 14px; border-radius: var(--border-radius-md); border: 0.5px solid var(--color-border-tertiary); cursor: pointer; background: var(--color-background-primary); color: var(--color-text-secondary); }
+.tab.active { background: var(--color-background-secondary); color: var(--color-text-primary); font-weight: 500; border-color: var(--color-border-secondary); }
+.panel { display: none; }
+.panel.active { display: block; }
+</style>
+
+<div class="wrap">
+  <p class="title">Educational NLP gap audit calculator</p>
+  <p class="sub">Compute VG, DRI, and MEI for your paper corpus — based on the framework from Zahid et al. (2025)</p>
+
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('quick')">Quick calculator</div>
+    <div class="tab" onclick="switchTab('paper')">Paper-by-paper</div>
+    <div class="tab" onclick="switchTab('about')">Metric definitions</div>
+  </div>
+
+  <div class="panel active" id="tab-quick">
+    <div class="card">
+      <div class="card-title"><i class="ti ti-checks" aria-hidden="true"></i> Validity Gap (VG)</div>
+      <div class="row">
+        <label>Total papers in sector (N)</label>
+        <input type="number" id="vg-n" value="23" min="1">
+      </div>
+      <div class="row">
+        <label>Papers with learning outcome YES (L)</label>
+        <input type="number" id="vg-l" value="0" min="0">
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><i class="ti ti-rocket" aria-hidden="true"></i> Deployment Readiness Index (DRI)</div>
+      <div class="row"><label>Offline benchmark only</label><input type="number" id="d0" value="18" min="0"></div>
+      <div class="row"><label>Crowdworker / LLM simulation</label><input type="number" id="d25" value="2" min="0"></div>
+      <div class="row"><label>Small user study (n &lt; 20)</label><input type="number" id="d50" value="2" min="0"></div>
+      <div class="row"><label>Large user study (n ≥ 20)</label><input type="number" id="d75" value="1" min="0"></div>
+      <div class="row"><label>Production system</label><input type="number" id="d100" value="0" min="0"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><i class="ti ti-world" aria-hidden="true"></i> Multilingual Equity Index (MEI)</div>
+      <div class="row"><label>English only (0.0)</label><input type="number" id="m0" value="17" min="0"></div>
+      <div class="row"><label>High-resource non-English added (0.3)</label><input type="number" id="m3" value="3" min="0"></div>
+      <div class="row"><label>Mid-resource language primary (0.6)</label><input type="number" id="m6" value="2" min="0"></div>
+      <div class="row"><label>Low-resource language primary (0.8)</label><input type="number" id="m8" value="1" min="0"></div>
+      <div class="row"><label>South Asian language primary (1.0)</label><input type="number" id="m10" value="0" min="0"></div>
+    </div>
+
+    <button class="calc-btn" onclick="calculate()"><i class="ti ti-calculator" aria-hidden="true"></i> Calculate metrics</button>
+  </div>
+
+  <div class="panel" id="tab-paper">
+    <div class="card">
+      <div class="card-title"><i class="ti ti-table" aria-hidden="true"></i> Add papers individually</div>
+      <div class="paper-row col-header">
+        <span>Paper title / ID</span>
+        <span>Deployment type</span>
+        <span>Language tier</span>
+      </div>
+      <div id="paper-list"></div>
+      <button class="add-btn" onclick="addPaper()"><i class="ti ti-plus" aria-hidden="true"></i> Add paper</button>
+    </div>
+    <div class="card" style="margin-top:12px">
+      <div class="card-title">Learning outcomes</div>
+      <div class="row">
+        <label>Papers annotated YES for learning outcome</label>
+        <input type="number" id="pp-learn" value="0" min="0">
+      </div>
+    </div>
+    <button class="calc-btn" onclick="calcFromPapers()"><i class="ti ti-calculator" aria-hidden="true"></i> Calculate from papers</button>
+  </div>
+
+  <div class="panel" id="tab-about">
+    <div class="card">
+      <div class="card-title"><i class="ti ti-info-circle" aria-hidden="true"></i> Validity Gap (VG)</div>
+      <p style="font-size:13px;color:var(--color-text-secondary);line-height:1.6">VG(s) = 1 − L(s)/N(s). Measures the proportion of papers that never evaluate whether students actually learned. VG = 1.000 means zero evidence of learning benefit across the entire sector.</p>
+    </div>
+    <div class="card">
+      <div class="card-title"><i class="ti ti-info-circle" aria-hidden="true"></i> Deployment Readiness Index (DRI)</div>
+      <p style="font-size:13px;color:var(--color-text-secondary);line-height:1.6">DRI(s) = mean d(p). Scores: offline=0.00, crowdworker/LLM-sim=0.25, small user study=0.50, large user study=0.75, production=1.00. Boundaries follow clinical-trial phase criteria.</p>
+    </div>
+    <div class="card">
+      <div class="card-title"><i class="ti ti-info-circle" aria-hidden="true"></i> Multilingual Equity Index (MEI)</div>
+      <p style="font-size:13px;color:var(--color-text-secondary);line-height:1.6">MEI(s) = mean m(p). Scores: English only=0.0, high-resource non-English=0.3, mid-resource primary=0.6, low-resource primary=0.8, South Asian primary=1.0. The ceiling is normative — South Asian languages serve 600M+ school-age learners yet have no dedicated educational NLP system in the 2022–2025 corpus.</p>
+    </div>
+    <div class="card">
+      <div class="card-title"><i class="ti ti-link" aria-hidden="true"></i> Reference</div>
+      <p style="font-size:13px;color:var(--color-text-secondary);line-height:1.6">Zahid et al. (2025). "A quantitative gap audit of LLM-era NLP for education: Validity, deployment, and multilingual equity." Field-wide results: VG=0.927, DRI=0.126, MEI=0.126. DRI correlates with learning-outcome evaluation at ρ=0.425, p&lt;0.001.</p>
+    </div>
+  </div>
+
+  <hr class="divider" id="results-divider" style="display:none">
+
+  <div id="results" style="display:none">
+    <p class="section-label">Results</p>
+    <div class="metric-cards">
+      <div class="metric-card">
+        <div class="label">Validity Gap</div>
+        <div class="value" id="r-vg">—</div>
+        <div class="badge" id="b-vg"></div>
+      </div>
+      <div class="metric-card">
+        <div class="label">Deployment Readiness</div>
+        <div class="value" id="r-dri">—</div>
+        <div class="badge" id="b-dri"></div>
+      </div>
+      <div class="metric-card">
+        <div class="label">Multilingual Equity</div>
+        <div class="value" id="r-mei">—</div>
+        <div class="badge" id="b-mei"></div>
+      </div>
+    </div>
+    <div class="card">
+      <p class="interp" id="r-interp"></p>
+    </div>
+    <button class="calc-btn" style="margin-top:8px" onclick="sendToChat()">Ask Claude to interpret these results ↗</button>
+  </div>
+</div>
+
+<script>
+function switchTab(t) {
+  document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(el => el.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('tab-' + t).classList.add('active');
+}
+
+var papers = [];
+
+function addPaper() {
+  var id = Date.now();
+  papers.push(id);
+  var div = document.createElement('div');
+  div.className = 'paper-row';
+  div.id = 'pr-' + id;
+  div.innerHTML = '<input type="text" placeholder="Paper title or ID" style="font-size:13px">' +
+    '<select>' +
+      '<option value="0">Offline benchmark</option>' +
+      '<option value="0.25">Crowdworker/LLM-sim</option>' +
+      '<option value="0.5">Small user study</option>' +
+      '<option value="0.75">Large user study</option>' +
+      '<option value="1">Production</option>' +
+    '</select>' +
+    '<select>' +
+      '<option value="0">English only</option>' +
+      '<option value="0.3">High-resource non-Eng</option>' +
+      '<option value="0.6">Mid-resource primary</option>' +
+      '<option value="0.8">Low-resource primary</option>' +
+      '<option value="1.0">South Asian primary</option>' +
+    '</select>' +
+    '<button class="remove-btn" onclick="removePaper(' + id + ')" aria-label="Remove paper">×</button>';
+  document.getElementById('paper-list').appendChild(div);
+}
+
+function removePaper(id) {
+  papers = papers.filter(p => p !== id);
+  var el = document.getElementById('pr-' + id);
+  if (el) el.remove();
+}
+
+function calcFromPapers() {
+  var rows = document.getElementById('paper-list').querySelectorAll('.paper-row');
+  var n = rows.length;
+  if (n === 0) { alert('Add at least one paper first.'); return; }
+  var learn = parseInt(document.getElementById('pp-learn').value) || 0;
+  var dSum = 0, mSum = 0;
+  rows.forEach(function(row) {
+    var sels = row.querySelectorAll('select');
+    dSum += parseFloat(sels[0].value);
+    mSum += parseFloat(sels[1].value);
+  });
+  showResults(1 - learn/n, dSum/n, mSum/n);
+}
+
+function calculate() {
+  var n = parseInt(document.getElementById('vg-n').value) || 1;
+  var l = parseInt(document.getElementById('vg-l').value) || 0;
+  var d0 = parseInt(document.getElementById('d0').value)||0;
+  var d25 = parseInt(document.getElementById('d25').value)||0;
+  var d50 = parseInt(document.getElementById('d50').value)||0;
+  var d75 = parseInt(document.getElementById('d75').value)||0;
+  var d100 = parseInt(document.getElementById('d100').value)||0;
+  var m0 = parseInt(document.getElementById('m0').value)||0;
+  var m3 = parseInt(document.getElementById('m3').value)||0;
+  var m6 = parseInt(document.getElementById('m6').value)||0;
+  var m8 = parseInt(document.getElementById('m8').value)||0;
+  var m10 = parseInt(document.getElementById('m10').value)||0;
+  var dTotal = d0+d25+d50+d75+d100;
+  var mTotal = m0+m3+m6+m8+m10;
+  if (dTotal === 0) dTotal = n;
+  if (mTotal === 0) mTotal = n;
+  var vg = 1 - l/n;
+  var dri = (d0*0 + d25*0.25 + d50*0.5 + d75*0.75 + d100*1.0) / dTotal;
+  var mei = (m0*0 + m3*0.3 + m6*0.6 + m8*0.8 + m10*1.0) / mTotal;
+  showResults(vg, dri, mei);
+}
+
+function showResults(vg, dri, mei) {
+  document.getElementById('r-vg').textContent = vg.toFixed(3);
+  document.getElementById('r-dri').textContent = dri.toFixed(3);
+  document.getElementById('r-mei').textContent = mei.toFixed(3);
+
+  var bvg = document.getElementById('b-vg');
+  if (vg >= 0.9) { bvg.textContent = 'Critical'; bvg.className = 'badge badge-red'; }
+  else if (vg >= 0.5) { bvg.textContent = 'High'; bvg.className = 'badge badge-amber'; }
+  else { bvg.textContent = 'Moderate'; bvg.className = 'badge badge-green'; }
+
+  var bdri = document.getElementById('b-dri');
+  if (dri < 0.1) { bdri.textContent = 'Very low'; bdri.className = 'badge badge-red'; }
+  else if (dri < 0.3) { bdri.textContent = 'Low'; bdri.className = 'badge badge-amber'; }
+  else { bdri.textContent = 'Moderate'; bdri.className = 'badge badge-green'; }
+
+  var bmei = document.getElementById('b-mei');
+  if (mei < 0.1) { bmei.textContent = 'English-only'; bmei.className = 'badge badge-red'; }
+  else if (mei < 0.3) { bmei.textContent = 'Low equity'; bmei.className = 'badge badge-amber'; }
+  else { bmei.textContent = 'Moderate'; bmei.className = 'badge badge-green'; }
+
+  var bench = { vg: 0.927, dri: 0.126, mei: 0.126 };
+  var vgcmp = vg > bench.vg ? 'worse than' : vg < bench.vg ? 'better than' : 'equal to';
+  var dricmp = dri > bench.dri ? 'better than' : dri < bench.dri ? 'worse than' : 'equal to';
+  var meicmp = mei > bench.mei ? 'better than' : mei < bench.mei ? 'worse than' : 'equal to';
+  document.getElementById('r-interp').innerHTML =
+    'VG = ' + vg.toFixed(3) + ' — ' + vgcmp + ' the field-wide benchmark (0.927). ' +
+    'DRI = ' + dri.toFixed(3) + ' — ' + dricmp + ' field-wide average (0.126). ' +
+    'MEI = ' + mei.toFixed(3) + ' — ' + meicmp + ' field-wide average (0.126). ' +
+    (vg === 1.0 ? 'VG = 1.000 means zero papers in this sector demonstrate student learning benefit. ' : '') +
+    (dri === 0 ? 'DRI = 0.000 means all papers use offline benchmarks only — no real learner testing. ' : '');
+
+  document.getElementById('results').style.display = 'block';
+  document.getElementById('results-divider').style.display = 'block';
+}
+
+function sendToChat() {
+  var vg = document.getElementById('r-vg').textContent;
+  var dri = document.getElementById('r-dri').textContent;
+  var mei = document.getElementById('r-mei').textContent;
+  sendPrompt('My sector has VG=' + vg + ', DRI=' + dri + ', MEI=' + mei + '. How do these compare to the field-wide benchmarks and what do they mean for my research direction?');
+}
+
+addPaper();
+addPaper();
+addPaper();
+</script>
